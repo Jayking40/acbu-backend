@@ -15,10 +15,7 @@ export async function postSavingsDeposit(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { user, amount, term_seconds } = (req as AuthRequest).body || {};
-    if (!user || !amount || term_seconds == null) {
-      throw new AppError('user, amount, and term_seconds required', 400);
-    }
+    const { user, amount, term_seconds } = (req as AuthRequest).body;
     if (!contractAddresses.savingsVault) {
       throw new AppError('Savings vault contract not configured', 503);
     }
@@ -52,10 +49,7 @@ export async function postSavingsWithdraw(
       });
       return;
     }
-    const { user, term_seconds, amount } = (req as AuthRequest).body || {};
-    if (!user || term_seconds == null || !amount) {
-      throw new AppError('user, term_seconds, and amount required', 400);
-    }
+    const { user, term_seconds, amount } = (req as AuthRequest).body;
     if (!contractAddresses.savingsVault) {
       throw new AppError('Savings vault contract not configured', 503);
     }
@@ -76,11 +70,8 @@ export async function getSavingsPositions(
   next: NextFunction
 ): Promise<void> {
   try {
-    const user = (req as AuthRequest).query?.user as string;
-    const termSeconds = (req as AuthRequest).query?.term_seconds as string;
-    if (!user) {
-      throw new AppError('query user required', 400);
-    }
+    const user = (req as AuthRequest).query.user as string;
+    const termSeconds = (req as AuthRequest).query.term_seconds as string;
     if (!contractAddresses.savingsVault) {
       throw new AppError('Savings vault contract not configured', 503);
     }

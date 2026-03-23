@@ -5,7 +5,7 @@
 import type { ConsumeMessage } from 'amqplib';
 import { connectRabbitMQ, QUEUES } from '../config/rabbitmq';
 import { logger } from '../config/logger';
-import { db } from '../config/database';
+import { prisma } from '../config/database';
 import { mintFromUsdcInternal } from '../controllers/mintController';
 
 const QUEUE = QUEUES.USDC_CONVERT_AND_MINT;

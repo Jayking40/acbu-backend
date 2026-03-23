@@ -105,7 +105,7 @@ export async function getInvestmentWithdrawRequests(
       take: 50,
     });
     res.status(200).json({
-      requests: list.map((r) => ({
+      requests: list.map((r: any) => ({
         id: r.id,
         amount_acbu: r.amountAcbu.toString(),
         status: r.status,
