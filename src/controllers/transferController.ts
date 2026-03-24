@@ -65,9 +65,19 @@ export async function postTransfers(
   }
 }
 
+const getTransfersQuerySchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : 20))
+    .pipe(z.number().int().min(1).max(100)),
+  cursor: z.string().optional(), // last transaction_id from previous page
+});
+
 /**
- * GET /transfers
- * List current user's transfers (optional; no raw address in default response).
+ * GET /transfers?limit=20&cursor=<last_transaction_id>
+ * List current user's transfers with cursor-based pagination.
+ * Returns { transfers, next_cursor } — pass next_cursor as cursor on the next request.
  */
 export async function getTransfers(
   req: AuthRequest,
@@ -79,10 +89,19 @@ export async function getTransfers(
     if (!userId) {
       throw new AppError("User-scoped API key required", 401);
     }
+
+    const query = getTransfersQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      const msg = query.error.errors.map((x) => x.message).join("; ");
+      throw new AppError(msg, 400);
+    }
+    const { limit, cursor } = query.data;
+
     const list = await prisma.transaction.findMany({
       where: { userId, type: "transfer" },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: limit + 1, // fetch one extra to determine if there's a next page
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
         id: true,
         status: true,
@@ -93,17 +112,26 @@ export async function getTransfers(
         completedAt: true,
       },
     });
-    const items = list.map((t: (typeof list)[number]) => ({
+
+    const hasMore = list.length > limit;
+    const page = hasMore ? list.slice(0, limit) : list;
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+    const items = page.map((t: (typeof page)[number]) => ({
       transaction_id: t.id,
       status: t.status,
       amount_acbu: t.acbuAmount?.toString() ?? null,
-      recipient_address: null as string | null, // hide address in default response
       blockchain_tx_hash: t.blockchainTxHash ?? undefined,
       created_at: t.createdAt.toISOString(),
       completed_at: t.completedAt?.toISOString() ?? undefined,
     }));
-    res.json({ transfers: items });
+
+    res.json({ transfers: items, next_cursor: nextCursor });
   } catch (e) {
+    if (e instanceof z.ZodError) {
+      const msg = e.errors.map((x) => x.message).join("; ");
+      return next(new AppError(msg, 400));
+    }
     next(e);
   }
 }
