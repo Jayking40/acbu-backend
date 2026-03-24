@@ -93,7 +93,9 @@ export const validateApiKey = async (
         where: { id: apiKeyRecord.id },
         data: { lastUsedAt: new Date() },
       })
-      .catch((e: any) => logger.error("Failed to update API key lastUsedAt", { e }));
+      .catch((e: any) =>
+        logger.error("Failed to update API key lastUsedAt", { e }),
+      );
 
     req.apiKey = {
       id: apiKeyRecord.id,

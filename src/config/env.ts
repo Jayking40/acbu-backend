@@ -193,7 +193,8 @@ export const config = {
       | "sendgrid"
       | "ses"
       | "log",
-    emailFrom: process.env.NOTIFICATION_FROM_EMAIL || "noreply@acbu.example.com",
+    emailFrom:
+      process.env.NOTIFICATION_FROM_EMAIL || "noreply@acbu.example.com",
     sendgridApiKey: process.env.SENDGRID_API_KEY || "",
     sesRegion:
       process.env.AWS_REGION || process.env.AWS_SES_REGION || "us-east-1",
