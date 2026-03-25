@@ -116,6 +116,24 @@ export const config = {
     useDynamicFees: process.env.STELLAR_USE_DYNAMIC_FEES === "true",
   },
 
+  // Pi Network / Bridge
+  pi: {
+    /** Enable Pi bridge/chain for wallet activation */
+    enabled: process.env.PI_BRIDGE_ENABLED === "true" || false,
+    /** Secret key for Pi bridge transactions */
+    secretKey: process.env.PI_SECRET_KEY || "",
+    /** Pi bridge/chain API endpoint */
+    apiUrl: process.env.PI_API_URL || "https://api.pi.network.com",
+    /** Minimum Pi sent to user wallet for activation. Default 0.1 */
+    minBalancePi: parseFloat(
+      process.env.WALLET_ACTIVATION_PI ||
+        process.env.PI_MIN_BALANCE ||
+        "0.1",
+    ),
+    /** Network: testnet or mainnet */
+    network: (process.env.PI_NETWORK || "testnet") as "testnet" | "mainnet",
+  },
+
   // Oracle (40/40/20: central bank, fintech, forex)
   oracle: {
     updateIntervalHours: parseInt(

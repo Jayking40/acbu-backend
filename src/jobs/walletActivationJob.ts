@@ -1,10 +1,14 @@
 /**
- * Consumes WALLET_ACTIVATION queue: when user pays KYC fee, send min XLM to their Stellar address.
+ * Consumes WALLET_ACTIVATION queue: when user pays KYC fee, send min crypto to their address.
+ * 
+ * Chain Selection:
+ * - Uses Pi when PI_BRIDGE_ENABLED=true
+ * - Falls back to Stellar XLM otherwise
  */
 import type { ConsumeMessage } from "amqplib";
 import { connectRabbitMQ, QUEUES } from "../config/rabbitmq";
 import { logger } from "../config/logger";
-import { sendXlmToActivate } from "../services/wallet/walletActivationService";
+import { sendCryptoToActivate } from "../services/wallet/walletActivationService";
 
 const QUEUE = QUEUES.WALLET_ACTIVATION;
 
@@ -21,7 +25,7 @@ export async function startWalletActivationConsumer(): Promise<void> {
           userId: string;
           stellarAddress: string;
         };
-        await sendXlmToActivate(body.stellarAddress);
+        await sendCryptoToActivate(body.stellarAddress);
         ch.ack(msg);
       } catch (e) {
         logger.error("Wallet activation job failed", { error: e });
@@ -32,3 +36,4 @@ export async function startWalletActivationConsumer(): Promise<void> {
   );
   logger.info("Wallet activation consumer started", { queue: QUEUE });
 }
+
