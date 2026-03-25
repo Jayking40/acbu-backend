@@ -15,8 +15,13 @@ export function verifyFlutterwaveSignature(
 ): void {
   const secret = config.flutterwave.webhookSecret;
   if (!secret) {
-    logger.warn("Flutterwave webhook secret not set; skipping verification");
-    next();
+    logger.error(
+      "FLUTTERWAVE_WEBHOOK_SECRET is not configured — rejecting webhook. " +
+        "Set the environment variable to accept Flutterwave webhooks.",
+    );
+    res.status(503).json({
+      error: "Webhook verification unavailable: secret not configured",
+    });
     return;
   }
   const rawBody = (req as unknown as { rawBody?: Buffer }).rawBody;
