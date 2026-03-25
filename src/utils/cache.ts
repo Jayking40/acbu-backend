@@ -107,6 +107,45 @@ export class CacheService {
       logger.error("Cache clear expired error", { error });
     }
   }
+
+  /**
+   * Increment a value in cache atomically
+   */
+  async increment<T>(
+    key: string,
+    field: string,
+    amount: number,
+    options: { ttl: number; setOnInsert?: Record<string, any> },
+  ): Promise<T | null> {
+    try {
+      const db = getMongoDB();
+      const collection = db.collection(CACHE_COLLECTION);
+      const ttl = options.ttl || DEFAULT_TTL;
+      const expiresAt = new Date(Date.now() + ttl * 1000);
+
+      const update: any = {
+        $inc: { [`value.${field}`]: amount },
+        $set: { updatedAt: new Date(), expiresAt },
+        $setOnInsert: { key },
+      };
+
+      if (options.setOnInsert) {
+        Object.keys(options.setOnInsert).forEach((k) => {
+          update.$setOnInsert[`value.${k}`] = options.setOnInsert![k];
+        });
+      }
+
+      const result = await collection.findOneAndUpdate({ key }, update, {
+        upsert: true,
+        returnDocument: "after",
+      });
+
+      return result?.value as T;
+    } catch (error) {
+      logger.error("Cache increment error", { key, error });
+      return null;
+    }
+  }
 }
 
 export const cacheService = new CacheService();
