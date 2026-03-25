@@ -1,11 +1,18 @@
-declare var process: any;
 import { prisma } from "../src/config/database";
 import { ingestMetricsAndProposeWeights } from "../src/services/metrics/metricsService";
 
-async function main() {
+/**
+ * Main execution function for the basket weight computation script.
+ * Ingests macroeconomic and platform metrics, computes proposed weights,
+ * and generates a summary report for review.
+ * 
+ * @returns {Promise<void>}
+ */
+async function main(): Promise<void> {
+  const runStartTime = new Date();
   console.log("Starting basket weight computation...");
   
-  // 1. Get current period
+  // 1. Get current period (UTC based for consistency)
   const now = new Date();
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, "0");
@@ -15,14 +22,17 @@ async function main() {
   console.log(`Ingesting metrics and computing weights for period: ${period}`);
   await ingestMetricsAndProposeWeights(period);
 
-  // 3. Fetch the updated metrics and proposed weights
+  // 3. Fetch the updated metrics and proposed weights for this specific run
   const metrics = await prisma.basketMetrics.findMany({
     where: { period },
   });
 
   const proposedConfigs = await prisma.basketConfig.findMany({
-    // Fetch proposals created recently (today)
-    where: { status: "proposed", effectiveFrom: { gte: new Date(new Date().setHours(0,0,0,0)) } },
+    // Fetch proposals created during this specific run execution
+    where: { 
+      status: "proposed", 
+      effectiveFrom: { gte: runStartTime } 
+    },
     orderBy: { weight: "desc" },
   });
 
@@ -61,9 +71,10 @@ async function main() {
 main()
   .catch((e: any) => {
     console.error("Error computing basket weights:", e);
-    process.exit(1);
+    // Use exitCode instead of immediate exit to allow cleanup in .finally()
+    process.exitCode = 1;
   })
   .finally(async () => {
+    // Ensure database disconnection happens before the script exits
     await prisma.$disconnect();
-    process.exit(0);
   });
