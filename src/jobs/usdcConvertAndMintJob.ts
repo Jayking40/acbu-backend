@@ -1,6 +1,10 @@
 /**
- * USDC deposit: convert USDC→XLM in backend (LP/swap service), then mint ACBU.
- * Pools and swaps run independently; user does not wait. Mint is approved once conversion succeeds.
+ * USDC deposit: convert USDC→XLM via Stellar DEX (pathPaymentStrictSend),
+ * then mint ACBU to the user's wallet.
+ *
+ * The swap is performed by the backend's configured STELLAR_SECRET_KEY keypair
+ * using the Stellar DEX. Minting is only triggered once the on-chain swap
+ * transaction is confirmed; if the swap fails the job nacks and retries.
  */
 import type { ConsumeMessage } from "amqplib";
 import {
@@ -11,6 +15,8 @@ import {
 import { logger } from "../config/logger";
 import { prisma } from "../config/database";
 import { mintFromUsdcInternal } from "../controllers/mintController";
+import { swapUsdcToXlm } from "../services/stellar/usdcSwap";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const QUEUE = QUEUES.USDC_CONVERT_AND_MINT;
 
@@ -42,16 +48,6 @@ export async function startUsdcConvertAndMintConsumer(): Promise<void> {
   logger.info("USDC convert-and-mint consumer started", { queue: QUEUE });
 }
 
-/**
- * Convert USDC→XLM (stub: backend LP/swap service), then mint ACBU to user.
- * In production, call your USDC/XLM swap or LP service here.
- */
-async function convertUsdcToXlm(_usdcAmount: number): Promise<void> {
-  // Stub: real implementation would use Stellar AMM, DEX, or P2P service.
-  // Pools and swaps run as independent backend services.
-  return;
-}
-
 export async function processUsdcConvertAndMint(
   payload: UsdcConvertAndMintPayload,
 ): Promise<void> {
@@ -81,7 +77,25 @@ export async function processUsdcConvertAndMint(
   });
 
   try {
-    await convertUsdcToXlm(usdcAmount);
+    // ── Step 1: swap USDC→XLM on the Stellar DEX ────────────────────────────
+    // This is the real conversion: minting must NOT proceed unless this
+    // on-chain transaction is confirmed. swapUsdcToXlm throws on any failure.
+    const { xlmReceived, txHash: swapTxHash } = await swapUsdcToXlm(usdcAmount);
+
+    // Persist the XLM amount obtained so the record reflects actual reserves.
+    await prisma.onRampSwap.update({
+      where: { id: onRampSwapId },
+      data: { xlmAmount: new Decimal(xlmReceived) },
+    });
+
+    logger.info("USDC→XLM swap confirmed; proceeding to mint ACBU", {
+      onRampSwapId,
+      usdcAmount,
+      xlmReceived,
+      swapTxHash,
+    });
+
+    // ── Step 2: mint ACBU to the user's Stellar wallet ───────────────────────
     const { transactionId, acbuAmount } = await mintFromUsdcInternal(
       usdcAmount,
       swap.stellarAddress,
@@ -99,6 +113,8 @@ export async function processUsdcConvertAndMint(
       onRampSwapId,
       userId: swap.userId,
       stellarAddress: swap.stellarAddress,
+      usdcAmount,
+      xlmReceived,
       acbuAmount,
       transactionId,
     });

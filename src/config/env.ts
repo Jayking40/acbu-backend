@@ -135,6 +135,16 @@ export const config = {
     baseFeeStroops: parseInt(process.env.STELLAR_BASE_FEE_STROOPS || "100", 10),
     /** When true, fetches the current recommended base fee from Horizon before each transaction. Falls back to baseFeeStroops on failure. */
     useDynamicFees: process.env.STELLAR_USE_DYNAMIC_FEES === "true",
+    /** Circle USDC issuer on Stellar testnet. Default is the well-known Circle testnet issuer. */
+    usdcIssuerTestnet:
+      process.env.USDC_ISSUER_TESTNET ??
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    /** Circle USDC issuer on Stellar mainnet. Default is the well-known Circle mainnet issuer. */
+    usdcIssuerMainnet:
+      process.env.USDC_ISSUER_MAINNET ??
+      "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    /** Slippage tolerance for the USDC→XLM DEX swap in basis points. Default 50 = 0.5%. */
+    usdcXlmSlippageBps: parseInt(process.env.USDC_XLM_SLIPPAGE_BPS ?? "50", 10),
   },
 
   // Pi Network / Bridge

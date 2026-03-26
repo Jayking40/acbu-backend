@@ -74,6 +74,14 @@ The app uses **Prisma Accelerate** for the primary database (managed PostgreSQL;
 | `STELLAR_BASE_FEE_STROOPS` | `100` | Base transaction fee in stroops (1 stroop = 0.0000001 XLM). Used as the static fee when dynamic fees are disabled, and as the fallback when a Horizon fee fetch fails. |
 | `STELLAR_USE_DYNAMIC_FEES` | `false` | Set to `true` to fetch the current recommended base fee from Horizon before each transaction. Automatically falls back to `STELLAR_BASE_FEE_STROOPS` if the Horizon request fails. Recommended for mainnet deployments under variable network load. |
 
+## USDC→XLM swap (usdcConvertAndMintJob)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `USDC_ISSUER_TESTNET` | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` | Circle USDC issuer on Stellar testnet. Default is the well-known Circle testnet address; only override when using a custom USDC issuer. |
+| `USDC_ISSUER_MAINNET` | `GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN` | Circle USDC issuer on Stellar mainnet. |
+| `USDC_XLM_SLIPPAGE_BPS` | `50` | Slippage tolerance for the USDC→XLM `pathPaymentStrictSend` DEX swap, in basis points (50 = 0.5%). The backend queries Horizon for the expected XLM output and rejects the swap if the DEX delivers fewer XLM than `expected × (1 − slippage)`. |
+
 ## Stellar contract IDs (after deploy)
 
 | Variable | Description |
