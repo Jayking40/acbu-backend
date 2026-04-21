@@ -193,14 +193,14 @@ export async function fetchAndStoreRates(): Promise<void> {
           ]
             .filter((r): r is number => r != null && r > 0)
             .map((r) => Math.round(r * ORACLE_RATE_DECIMALS).toString());
-            
+
           logger.info("Updating oracle rate", {
             validator: sourceAccount,
             currency,
             rate: rate7,
             sources: sourcesForContract,
           });
-            
+
           await acbuOracleService.updateRate({
             validator: sourceAccount,
             currency,

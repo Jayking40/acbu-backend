@@ -3,7 +3,11 @@ import { config } from "../config/env";
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    if (!origin || config.corsOrigin.includes("*") || config.corsOrigin.includes(origin)) {
+    if (
+      !origin ||
+      config.corsOrigin.includes("*") ||
+      config.corsOrigin.includes(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));

@@ -125,7 +125,10 @@ export async function postOnRamp(
         ),
       );
     }
-    if (e instanceof Error && e.message.includes("non-existent contract function")) {
+    if (
+      e instanceof Error &&
+      e.message.includes("non-existent contract function")
+    ) {
       return next(new AppError(e.message, 503));
     }
     next(e);

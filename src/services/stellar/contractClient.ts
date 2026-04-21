@@ -116,14 +116,19 @@ export class ContractClient {
       const rpcServer = new rpc.Server(stellarClient.getSorobanRpcUrl());
       // Simulate first so we can attach Soroban auth + resource footprint/fees.
       // This is required for contracts that call `require_auth()` (admin/validator gated).
-      const simulation = await simulateTransactionWithRetry(rpcServer, transaction, {
-        contractId,
-        functionName,
-      });
+      const simulation = await simulateTransactionWithRetry(
+        rpcServer,
+        transaction,
+        {
+          contractId,
+          functionName,
+        },
+      );
       if (rpc.Api.isSimulationError(simulation)) {
         throw new Error(`Simulation error: ${simulation.error}`);
       }
-      transaction = rpc.assembleTransaction(transaction, simulation)
+      transaction = rpc
+        .assembleTransaction(transaction, simulation)
         .setTimeout(0)
         .build();
 
@@ -214,7 +219,6 @@ export class ContractClient {
         }
         await new Promise((r) => setTimeout(r, 1500));
       }
-
     } catch (error) {
       logger.error("Failed to invoke contract", {
         contractId: options.contractId,
@@ -266,10 +270,14 @@ export class ContractClient {
       const transaction = builder.build();
 
       const rpcServer = new rpc.Server(stellarClient.getSorobanRpcUrl());
-      const simulation = await simulateTransactionWithRetry(rpcServer, transaction, {
-        contractId,
-        functionName,
-      });
+      const simulation = await simulateTransactionWithRetry(
+        rpcServer,
+        transaction,
+        {
+          contractId,
+          functionName,
+        },
+      );
 
       if (rpc.Api.isSimulationError(simulation)) {
         throw new Error(`Simulation error: ${simulation.error}`);
@@ -315,7 +323,10 @@ export class ContractClient {
                 ? rawResultXdr.toString("base64")
                 : String(rawResultXdr);
 
-        const txResult = xdr.TransactionResult.fromXDR(resultXdrBase64, "base64");
+        const txResult = xdr.TransactionResult.fromXDR(
+          resultXdrBase64,
+          "base64",
+        );
         const results = txResult.result().results();
         if (results.length > 0) {
           const tr = results[0].tr();

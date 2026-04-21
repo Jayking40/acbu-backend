@@ -37,4 +37,3 @@ export async function ensureAccountActivated(
   const res = await server.submitTransaction(tx);
   return { created: true, txHash: res.hash };
 }
-

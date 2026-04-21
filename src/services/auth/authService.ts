@@ -79,7 +79,6 @@ function generateOtpCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-
 /**
  * Resolve identifier to user (username, email, or E.164 phone).
  */
@@ -188,13 +187,17 @@ export async function signin(params: SigninParams): Promise<SigninResult> {
           expiresAt: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
         },
       });
-      
+
       try {
         const ch = getRabbitMQChannel();
         await ch.assertQueue(QUEUES.OTP_SEND, { durable: true });
-        ch.sendToQueue(QUEUES.OTP_SEND, Buffer.from(JSON.stringify({ channel: user.twoFaMethod, to, code })), {
-          persistent: true,
-        });
+        ch.sendToQueue(
+          QUEUES.OTP_SEND,
+          Buffer.from(JSON.stringify({ channel: user.twoFaMethod, to, code })),
+          {
+            persistent: true,
+          },
+        );
         logger.debug("OTP published to queue", {
           channel: user.twoFaMethod,
           to: to ? "***" : undefined,

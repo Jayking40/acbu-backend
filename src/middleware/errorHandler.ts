@@ -37,7 +37,9 @@ export const errorHandler = (
 ): void => {
   if (err instanceof SyntaxError && "body" in err) {
     logger.warn("JSON Parse Error", { message: err.message, path: req.path });
-    res.status(400).json({ error: { message: "Invalid JSON payload", statusCode: 400 } });
+    res
+      .status(400)
+      .json({ error: { message: "Invalid JSON payload", statusCode: 400 } });
     return;
   }
 

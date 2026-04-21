@@ -171,7 +171,9 @@ export async function mintFromUsdcInternal(
       where: { id: tx.id },
       data: {
         status: "failed",
-        rateSnapshot: { error: "No Stellar source account (STELLAR_SECRET_KEY)" },
+        rateSnapshot: {
+          error: "No Stellar source account (STELLAR_SECRET_KEY)",
+        },
       },
     });
     throw new Error("No source account available");

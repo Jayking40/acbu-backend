@@ -88,7 +88,9 @@ export type FiatAccountView = {
 /**
  * Soroban custodial demo fiat: no simulated bank. Returns one row per basket currency for UI compatibility.
  */
-export async function getBankAccounts(userId: string): Promise<FiatAccountView[]> {
+export async function getBankAccounts(
+  userId: string,
+): Promise<FiatAccountView[]> {
   const [user, faucetRows, latestRates] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
@@ -116,7 +118,8 @@ export async function getBankAccounts(userId: string): Promise<FiatAccountView[]
     }),
   ]);
 
-  const suffix = user?.username || user?.phoneE164 || user?.id.slice(0, 8) || "user";
+  const suffix =
+    user?.username || user?.phoneE164 || user?.id.slice(0, 8) || "user";
 
   const balances = new Map<string, number>();
   for (const c of BASKET_CURRENCIES) balances.set(c, 0);
