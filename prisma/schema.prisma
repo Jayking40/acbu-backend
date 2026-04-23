@@ -17,8 +17,9 @@ model Organization {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamp
 
-  users   User[]   @relation("UserOrganization")
-  apiKeys ApiKey[]  @relation("OrganizationApiKeys")
+  users        User[]        @relation("UserOrganization")
+  apiKeys      ApiKey[]      @relation("OrganizationApiKeys")
+  transactions Transaction[] @relation("OrganizationTransactions")
 
   @@index([kycStatus], name: "idx_organization_kyc_status")
   @@map("organizations")
@@ -72,6 +73,7 @@ model User {
 model Transaction {
   id                String    @id @default(uuid()) @db.Uuid
   userId            String?   @map("user_id") @db.Uuid
+  organizationId    String?   @map("organization_id") @db.Uuid
   type              String    @db.VarChar(20) // 'mint', 'burn', 'transfer'
   status            String    @default("pending") @db.VarChar(20) // 'pending', 'processing', 'completed', 'failed'
 
@@ -96,11 +98,13 @@ model Transaction {
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamp
   completedAt       DateTime? @map("completed_at") @db.Timestamp
 
-  user              User?     @relation(fields: [userId], references: [id])
+  user              User?         @relation(fields: [userId], references: [id])
+  organization      Organization? @relation("OrganizationTransactions", fields: [organizationId], references: [id])
   reserveHistory    ReserveHistory[]
   webhooks          Webhook[]
 
   @@index([userId], name: "idx_transactions_user_id")
+  @@index([organizationId], name: "idx_transactions_organization_id")
   @@index([type], name: "idx_transactions_type")
   @@index([status], name: "idx_transactions_status")
   @@index([createdAt], name: "idx_transactions_created_at")
