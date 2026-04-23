@@ -10,6 +10,9 @@ type FallbackRateLimitEntry = {
   expiresAt: number;
 };
 
+/** Identifies which rate-limiting strategy produced a 429 response. */
+export type LimiterContext = "ip" | "api_key";
+
 const fallbackRateLimitStore = new Map<string, FallbackRateLimitEntry>();
 
 const incrementFallback = (
@@ -30,20 +33,35 @@ const incrementFallback = (
 };
 
 /**
- * Create rate limiter based on API key or IP
+ * Create a rate limiter with a contextual 429 response.
+ *
+ * @param windowMs - The time window in milliseconds.
+ * @param maxRequests - Maximum number of requests allowed per window.
+ * @param context - Whether this limiter tracks by `"ip"` (default) or `"api_key"`.
+ *   Controls the human-readable message and the `limitType` field in the 429 body
+ *   so callers can distinguish which limit was tripped.
  */
-export const createRateLimiter = (windowMs: number, maxRequests: number) => {
+export const createRateLimiter = (
+  windowMs: number,
+  maxRequests: number,
+  context: LimiterContext = "ip",
+) => {
+  const message =
+    context === "ip"
+      ? "Too many requests from this IP address, please try again later."
+      : "API key rate limit exceeded, please try again later.";
+
   return rateLimit({
     windowMs,
     max: maxRequests,
-    message: "Too many requests from this IP, please try again later.",
     standardHeaders: true,
     legacyHeaders: false,
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: {
           code: "RATE_LIMIT_EXCEEDED",
-          message: "Too many requests, please try again later.",
+          message,
+          limitType: context,
         },
       });
     },
@@ -89,7 +107,8 @@ export const apiKeyRateLimiter = async (
       res.status(429).json({
         error: {
           code: "RATE_LIMIT_EXCEEDED",
-          message: "API key rate limit exceeded",
+          message: "API key rate limit exceeded, please try again later.",
+          limitType: "api_key" as LimiterContext,
         },
       });
       return;
@@ -103,7 +122,8 @@ export const apiKeyRateLimiter = async (
     res.status(429).json({
       error: {
         code: "RATE_LIMIT_EXCEEDED",
-        message: "API key rate limit exceeded",
+        message: "API key rate limit exceeded, please try again later.",
+        limitType: "api_key" as LimiterContext,
       },
     });
     return;
