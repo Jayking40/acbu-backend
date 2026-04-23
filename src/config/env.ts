@@ -42,6 +42,10 @@ export const config = {
   // JWT
   jwtSecret: process.env.JWT_SECRET || "",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  
+  // 2FA Challenge Token Secret (optional, falls back to JWT_SECRET if not set)
+  // RECOMMENDED: Use a separate secret for challenge tokens in production and rotate regularly
+  challengeTokenSecret: process.env.CHALLENGE_TOKEN_SECRET || process.env.JWT_SECRET || "",
 
   // API Security
   apiKeySalt: process.env.API_KEY_SALT || "",
