@@ -20,6 +20,7 @@ import { getBurnFeeBps } from "../services/feePolicy/feePolicyService";
 
 const DECIMALS_7 = 1e7;
 
+/** Best-effort stringify for Decimal-like values in Prisma models. */
 function toNullableStringDecimal(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   if (typeof v === "string") return v;
@@ -30,6 +31,7 @@ function toNullableStringDecimal(v: unknown): string | null {
   return null;
 }
 
+/** Formats an idempotent response using the existing burn transaction record. */
 function respondFromExistingBurnTx(
   res: Response,
   tx: Transaction,

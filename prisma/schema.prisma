@@ -80,7 +80,7 @@ model Transaction {
   recipientAddress      String?                 @map("recipient_address") @db.VarChar(56)
   fee                   Decimal?                @db.Decimal(20, 8)
   rateSnapshot          Json?                   @map("rate_snapshot")
-  blockchainTxHash      String?                 @unique(map: "uq_transactions_blockchain_tx_hash") @map("blockchain_tx_hash") @db.VarChar(255)
+  blockchainTxHash      String?                 @map("blockchain_tx_hash") @db.VarChar(255)
   confirmations         Int                     @default(0)
   createdAt             DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
   completedAt           DateTime?               @map("completed_at") @db.Timestamp(6)
@@ -88,6 +88,9 @@ model Transaction {
   user                  User?                   @relation(fields: [userId], references: [id])
   webhooks              Webhook[]
 
+  // B-074: enforce idempotency for burn submissions only.
+  // Allows the same hash to appear under other transaction types without forcing global changes.
+  @@unique([type, blockchainTxHash], map: "uq_transactions_type_blockchain_tx_hash")
   @@index([userId], map: "idx_transactions_user_id")
   @@index([type], map: "idx_transactions_type")
   @@index([status], map: "idx_transactions_status")
