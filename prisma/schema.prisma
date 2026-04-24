@@ -97,6 +97,9 @@ model Transaction {
   webhooks              Webhook[]
   salaryItem            SalaryItem?
 
+  // B-074: enforce idempotency for burn submissions only.
+  // Allows the same hash to appear under other transaction types without forcing global changes.
+  @@unique([type, blockchainTxHash], map: "uq_transactions_type_blockchain_tx_hash")
   @@index([userId], map: "idx_transactions_user_id")
   @@index([type], map: "idx_transactions_type")
   @@index([status], map: "idx_transactions_status")
@@ -499,7 +502,6 @@ model KycValidatorReward {
   @@index([status], name: "idx_kyc_validator_reward_status")
   @@map("kyc_validator_rewards")
 }
-
 model SalaryBatch {
   id              String       @id @default(uuid()) @db.Uuid
   organizationId  String?      @map("organization_id") @db.Uuid
@@ -561,4 +563,3 @@ model SalarySchedule {
   @@index([nextRunAt], map: "idx_salary_schedule_next_run")
   @@map("salary_schedules")
 }
-
